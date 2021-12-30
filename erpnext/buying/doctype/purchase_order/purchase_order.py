@@ -19,6 +19,7 @@ from erpnext.stock.doctype.item.item import get_item_defaults
 from erpnext.setup.doctype.item_group.item_group import get_item_group_defaults
 from erpnext.accounts.doctype.sales_invoice.sales_invoice import validate_inter_company_party, update_linked_doc,\
 	unlink_inter_company_doc
+from frappe.utils.user import get_user_fullname
 
 form_grid_templates = {
 	"items": "templates/form_grid/item_grid.html"
@@ -211,6 +212,9 @@ class PurchaseOrder(BuyingController):
 
 		self.notify_update()
 		clear_doctype_notifications(self)
+
+	def before_submit(self):
+		self.set('submitter', get_user_fullname(frappe.session['user']))
 
 	def on_submit(self):
 		super(PurchaseOrder, self).on_submit()

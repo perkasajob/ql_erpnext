@@ -64,8 +64,19 @@ frappe.ui.form.on("Sales Order", {
 				}
 			}
 		});
-
-		erpnext.queries.setup_warehouse_query(frm);
+		frm.set_query("warehouse", "items", function(frm, cdt, cdn) {
+			var row = locals[cdt][cdn];
+			debugger
+			return {
+				query: "erpnext.controllers.queries.warehouse_query",
+				filters: [
+					["Bin", "item_code", "=", row.item_code],
+					// ["Warehouse", "is_group", "=", 0],
+					["Warehouse", "company", "=", frm.doc.company]
+				]
+			}
+		});
+		// erpnext.queries.setup_warehouse_query(frm);
 	},
 
 	delivery_date: function(frm) {

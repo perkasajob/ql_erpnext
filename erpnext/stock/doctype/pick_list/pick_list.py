@@ -18,7 +18,8 @@ from erpnext.selling.doctype.sales_order.sales_order import make_delivery_note a
 
 class PickList(Document):
 	def before_save(self):
-		self.set_item_locations()
+		# self.set_item_locations()
+		pass
 
 	def before_submit(self):
 		for item in self.locations:
@@ -158,8 +159,9 @@ def get_available_item_locations(item_code, from_warehouses, required_qty, compa
 	remaining_qty = required_qty - total_qty_available
 
 	if remaining_qty > 0:
-		frappe.msgprint(_('{0} units of {1} is not available.')
-			.format(remaining_qty, frappe.get_desk_link('Item', item_code)))
+		# frappe.msgprint(_('{0} units of {1} is not available.')
+		# 	.format(remaining_qty, frappe.get_desk_link('Item', item_code)))
+		frappe.msgprint('{1},{0}\n'.format(remaining_qty, item_code)) #pjob
 
 	return locations
 

@@ -226,7 +226,7 @@ class PaymentEntry(AccountsController):
 		elif self.party_type == "Supplier":
 			valid_reference_doctypes = ("Purchase Order", "Purchase Invoice", "Journal Entry")
 		elif self.party_type == "Employee":
-			valid_reference_doctypes = ("Expense Claim", "Journal Entry", "Employee Advance")
+			valid_reference_doctypes = ("Expense Claim", "Journal Entry", "Employee Advance", "Cash Expense Claim", "Employee Advance", "Cash Expense Claim", "Cash Advance Request")
 		elif self.party_type == "Shareholder":
 			valid_reference_doctypes = ("Journal Entry")
 
@@ -594,7 +594,7 @@ class PaymentEntry(AccountsController):
 		if self.payment_type in ("Receive", "Pay") and self.party:
 			for d in self.get("references"):
 				if d.allocated_amount \
-					and d.reference_doctype in ("Sales Order", "Purchase Order", "Employee Advance"):
+					and d.reference_doctype in ("Sales Order", "Purchase Order", "Employee Advance", "Cash Advance Request"):
 						frappe.get_doc(d.reference_doctype, d.reference_name).set_total_advance_paid()
 
 	def update_expense_claim(self):
@@ -974,6 +974,8 @@ def get_payment_entry(dt, dn, party_amount=None, bank_account=None, bank_amount=
 	elif dt == "Fees":
 		party_account = doc.receivable_account
 	elif dt == "Employee Advance":
+		party_account = doc.advance_account
+	elif dt == "Cash Advance Request":
 		party_account = doc.advance_account
 	elif dt == "Expense Claim":
 		party_account = doc.payable_account

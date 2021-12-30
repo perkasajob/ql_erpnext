@@ -40,7 +40,7 @@ class SalesOrder(SellingController):
 		self.validate_uom_is_integer("stock_uom", "stock_qty")
 		self.validate_uom_is_integer("uom", "qty")
 		self.validate_for_items()
-		self.validate_warehouse()
+		# self.validate_warehouse()
 		self.validate_drop_ship()
 		self.validate_serial_no_based_delivery()
 		validate_inter_company_party(self.doctype, self.customer, self.company, self.inter_company_order_reference)
