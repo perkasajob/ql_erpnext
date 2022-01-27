@@ -25,6 +25,22 @@ frappe.ui.form.on("Item", {
 	},
 
 	refresh: function(frm) {
+		if(frm.doc.__islocal){
+			frm.add_custom_button(__("Get Item Code"), function() {
+				frappe.call({
+					args: {
+						"prefix": frm.doc.item_code
+					},
+					method: "ql.ql.utlis.get_unique_item_code",
+					callback: function (r) {
+						if (r.message) {
+							frm.set_value("item_code", r.message)
+							frm.set_value("item_name", frm.doc.item_code);
+						}
+					}
+				});
+			}, __("Tool"));
+		}
 		if (frm.doc.is_stock_item) {
 			frm.add_custom_button(__("Balance"), function() {
 				frappe.route_options = {
@@ -187,6 +203,7 @@ frappe.ui.form.on("Item", {
 			frm.set_value("item_name", frm.doc.item_code);
 		if(!frm.doc.description)
 			frm.set_value("description", frm.doc.item_code);
+
 	},
 
 	is_stock_item: function(frm) {

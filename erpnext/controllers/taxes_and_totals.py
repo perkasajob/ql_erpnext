@@ -2,7 +2,7 @@
 # License: GNU General Public License v3. See license.txt
 
 from __future__ import unicode_literals
-import json
+import json, math
 import frappe, erpnext
 from frappe import _, scrub
 from frappe.utils import cint, flt, round_based_on_smallest_currency_fraction
@@ -435,6 +435,9 @@ class calculate_taxes_and_totals(object):
 		if self.doc.additional_discount_percentage:
 			self.doc.discount_amount = flt(flt(self.doc.get(scrub(self.doc.apply_discount_on)))
 				* self.doc.additional_discount_percentage / 100, self.doc.precision("discount_amount"))
+		elif hasattr(self.doc, "mdp_discount_amount"):
+			self.doc.discount_amount =  math.ceil(float(self.doc.mdp_discount_amount or 0.0) + float(self.doc.mdp_discount_margin or 0.0)/100 * (self.doc.total-float(self.doc.mdp_discount_amount or 0.0)))
+
 
 	def apply_discount_amount(self):
 		if self.doc.discount_amount:

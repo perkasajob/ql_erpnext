@@ -43,6 +43,8 @@ class PurchaseOrder(BuyingController):
 	def validate(self):
 		super(PurchaseOrder, self).validate()
 
+		self.set_before_save()
+
 		self.set_status()
 
 		self.validate_supplier()
@@ -318,6 +320,10 @@ class PurchaseOrder(BuyingController):
 			self.db_set("per_received", flt(received_qty/total_qty) * 100, update_modified=False)
 		else:
 			self.db_set("per_received", 0, update_modified=False)
+
+	def set_before_save(self):
+		if not self.orderer and self.get("__islocal"):
+			self.set('orderer', get_user_fullname(frappe.session['user']))
 
 def item_last_purchase_rate(name, conversion_rate, item_code, conversion_factor= 1.0):
 	"""get last purchase rate for an item"""

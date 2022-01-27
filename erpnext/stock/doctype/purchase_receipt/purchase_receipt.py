@@ -524,6 +524,7 @@ def make_purchase_invoice(source_name, target_doc=None):
 	def get_pending_qty(item_row):
 		pending_qty = item_row.qty - invoiced_qty_map.get(item_row.name, 0)
 		returned_qty = flt(returned_qty_map.get(item_row.name, 0))
+		returned_qty = 0 #pjob
 		if returned_qty:
 			if returned_qty >= pending_qty:
 				pending_qty = 0

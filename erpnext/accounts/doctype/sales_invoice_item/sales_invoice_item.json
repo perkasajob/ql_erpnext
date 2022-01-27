@@ -701,7 +701,6 @@
    "oldfieldtype": "Link",
    "options": "Delivery Note",
    "print_hide": 1,
-   "read_only": 1,
    "search_index": 1
   },
   {
@@ -804,8 +803,7 @@
  ],
  "idx": 1,
  "istable": 1,
- "links": [],
- "modified": "2020-08-20 11:24:41.749986",
+ "modified": "2022-01-04 16:52:45.256844",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Sales Invoice Item",

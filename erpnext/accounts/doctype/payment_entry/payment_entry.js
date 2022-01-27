@@ -1026,6 +1026,22 @@ frappe.ui.form.on('Payment Entry Deduction', {
 	}
 })
 frappe.ui.form.on('Payment Entry', {
+	paid_from_account_currency: function(frm){
+		if (frm.doc.references && frm.doc.paid_from_account_currency != "IDR"){
+			let dt = frm.doc.references[0].reference_doctype
+			let dn = frm.doc.references[0].reference_name
+			frappe.db.get_doc(dt, dn)
+			.then(doc => {
+				console.log('TST us called')
+				frm.set_value({
+					paid_amount: doc.total
+				})
+			})
+		}
+	},
+	paid_to_account_currency: function(frm){
+
+	},
 	cost_center: function(frm){
 		if (frm.doc.posting_date && (frm.doc.paid_from||frm.doc.paid_to)) {
 			return frappe.call({
