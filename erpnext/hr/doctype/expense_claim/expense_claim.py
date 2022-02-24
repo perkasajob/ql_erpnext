@@ -2,9 +2,12 @@
 # License: GNU General Public License v3. See license.txt
 
 from __future__ import unicode_literals
-import frappe, erpnext
+from cmath import nan
+from pickle import FALSE
+from pydoc import doc
+import frappe, erpnext, json
 from frappe import _
-from frappe.utils import get_fullname, flt, cstr
+from frappe.utils import get_fullname, flt, cstr, cint
 from frappe.model.document import Document
 from erpnext.hr.utils import set_employee_name
 from erpnext.accounts.party import get_party_account
@@ -19,13 +22,14 @@ class ExpenseApproverIdentityError(frappe.ValidationError): pass
 
 class ExpenseClaim(AccountsController):
 	def onload(self):
-		self.get("__onload").make_payment_via_journal_entry = frappe.db.get_single_value('Accounts Settings',
-			'make_payment_via_journal_entry')
+		# self.get("__onload").make_payment_via_journal_entry = frappe.db.get_single_value('Accounts Settings',
+		# 	'make_payment_via_journal_entry')
+		self.get("__onload").make_payment_via_journal_entry = 1
 
 	def validate(self):
+		self.calculate_total_amount()
 		self.validate_advances()
 		self.validate_sanctioned_amount()
-		self.calculate_total_amount()
 		set_employee_name(self)
 		self.set_expense_account(validate=True)
 		self.set_payable_account()
@@ -270,6 +274,51 @@ def update_reimbursed_amount(doc):
 	doc.set_status()
 	frappe.db.set_value("Expense Claim", doc.name , "status", doc.status)
 
+
+@frappe.whitelist()
+def make_bank_entry_mkt(dt, dn):
+	from erpnext.accounts.doctype.journal_entry.journal_entry import get_default_bank_cash_account
+	from erpnext.accounts.utils import get_balance_on, get_account_currency
+
+	expense_claim = frappe.get_doc(dt, dn)
+	default_bank_cash_account = get_default_bank_cash_account(expense_claim.company, "Bank")
+	if not default_bank_cash_account:
+		default_bank_cash_account = get_default_bank_cash_account(expense_claim.company, "Cash")
+
+	account_details = frappe.db.get_value("Account", expense_claim.cash_account,
+		["account_currency", "account_type"], as_dict=1)
+
+	payable_amount = flt(expense_claim.total_sanctioned_amount) \
+		- flt(expense_claim.total_amount_reimbursed) - flt(expense_claim.total_advance_amount)
+
+	je = frappe.new_doc("Journal Entry")
+	je.voucher_type = 'Bank Entry'
+	je.company = expense_claim.company
+	je.remark = 'Payment against Expense Claim: ' + dn
+
+	je.append("accounts", {
+		"account": expense_claim.payable_account,
+		"debit_in_account_currency": payable_amount,
+		"reference_type": "Expense Claim",
+		"party_type": "Employee",
+		"party": expense_claim.employee,
+		"cost_center": expense_claim.cost_center,
+		"reference_name": expense_claim.name
+	})
+
+	je.append("accounts", {
+		"account": expense_claim.cash_account,
+		"credit_in_account_currency": payable_amount,
+		"reference_type": "Expense Claim",
+		"reference_name": expense_claim.name,
+		"balance": get_balance_on(expense_claim.cash_account) ,
+		"account_currency": account_details.account_currency,
+		"cost_center": expense_claim.cost_center,
+		"account_type": account_details.account_type
+	})
+
+	return je.as_dict()
+
 @frappe.whitelist()
 def make_bank_entry(dt, dn):
 	from erpnext.accounts.doctype.journal_entry.journal_entry import get_default_bank_cash_account
@@ -310,6 +359,47 @@ def make_bank_entry(dt, dn):
 
 	return je.as_dict()
 
+
+# @frappe.whitelist()
+# def make_bank_entry(dt, dn):
+# 	from erpnext.accounts.doctype.journal_entry.journal_entry import get_default_bank_cash_account
+
+# 	expense_claim = frappe.get_doc(dt, dn)
+# 	default_bank_cash_account = get_default_bank_cash_account(expense_claim.company, "Bank")
+# 	if not default_bank_cash_account:
+# 		default_bank_cash_account = get_default_bank_cash_account(expense_claim.company, "Cash")
+
+# 	payable_amount = flt(expense_claim.total_sanctioned_amount) \
+# 		- flt(expense_claim.total_amount_reimbursed) - flt(expense_claim.total_advance_amount)
+
+# 	je = frappe.new_doc("Journal Entry")
+# 	je.voucher_type = 'Bank Entry'
+# 	je.company = expense_claim.company
+# 	je.remark = 'Payment against Expense Claim: ' + dn
+
+# 	je.append("accounts", {
+# 		"account": expense_claim.payable_account,
+# 		"debit_in_account_currency": payable_amount,
+# 		"reference_type": "Expense Claim",
+# 		"party_type": "Employee",
+# 		"party": expense_claim.employee,
+# 		"cost_center": erpnext.get_default_cost_center(expense_claim.company),
+# 		"reference_name": expense_claim.name
+# 	})
+
+# 	je.append("accounts", {
+# 		"account": default_bank_cash_account.account,
+# 		"credit_in_account_currency": payable_amount,
+# 		"reference_type": "Expense Claim",
+# 		"reference_name": expense_claim.name,
+# 		"balance": default_bank_cash_account.balance,
+# 		"account_currency": default_bank_cash_account.account_currency,
+# 		"cost_center": erpnext.get_default_cost_center(expense_claim.company),
+# 		"account_type": default_bank_cash_account.account_type
+# 	})
+
+# 	return je.as_dict()
+
 @frappe.whitelist()
 def get_expense_claim_account(expense_claim_type, company):
 	account = frappe.db.get_value("Expense Claim Account",
@@ -331,7 +421,7 @@ def get_advances(employee, advance_id=None):
 
 	return frappe.db.sql("""
 		select
-			name, posting_date, paid_amount, claimed_amount, advance_account
+			name, posting_date, paid_amount, claimed_amount, advance_account, travel_request
 		from
 			`tabEmployee Advance`
 		where {0}
@@ -340,7 +430,7 @@ def get_advances(employee, advance_id=None):
 
 @frappe.whitelist()
 def get_expense_claim(
-	employee_name, company, employee_advance_name, posting_date, paid_amount, claimed_amount):
+	employee_name, company, employee_advance_name, posting_date, paid_amount, claimed_amount, travel_request=None, approver_1=None, approver_2=None, approver_3=None):
 	default_payable_account = frappe.get_cached_value('Company',  company,  "default_payable_account")
 	default_cost_center = frappe.get_cached_value('Company',  company,  'cost_center')
 
@@ -349,7 +439,11 @@ def get_expense_claim(
 	expense_claim.employee = employee_name
 	expense_claim.payable_account = default_payable_account
 	expense_claim.cost_center = default_cost_center
+	expense_claim.travel_request = travel_request
 	expense_claim.is_paid = 1 if flt(paid_amount) else 0
+	expense_claim.approver_1= approver_1
+	expense_claim.approver_2= approver_2
+	expense_claim.approver_3= approver_3
 	expense_claim.append(
 		'advances',
 		{
@@ -362,3 +456,133 @@ def get_expense_claim(
 	)
 
 	return expense_claim
+
+@frappe.whitelist()
+def create_expense_claim_dm(employee, approver_1=None, approver_2=None, approver_3=None, travel_request=None, expenses=[], remark="", advances=[], file_url =  None):
+	if not employee:
+		return {"error": "employee not defined"}
+
+
+	doc = create_expense_claim( employee, approver_1, approver_2, approver_3, travel_request, expenses, remark, advances, file_url)
+
+	doc.insert(ignore_permissions=True)
+	doc.db_set("workflow_state", "Submitted")
+	attach_bills(doc, file_url)
+	frappe.db.commit()
+	r = frappe.request
+	return doc
+
+@frappe.whitelist()
+def create_expense_claim_spv(employee, approver_1=None, approver_2=None, approver_3=None, travel_request=None, expenses=[], remark="", advances=[], file_url = None, cost_center = None):
+	if not employee:
+		return {"error": "employee not defined"}
+
+	doc = create_expense_claim( employee, approver_1, approver_2, approver_3, travel_request, expenses, remark, advances, file_url, cost_center)
+	doc.insert(ignore_permissions=True)
+	if not approver_2:
+		doc.db_set("workflow_state", "Received CSD")
+	else:
+		doc.db_set("workflow_state", "Approved 1")
+	attach_bills(doc, file_url)
+	frappe.db.commit()
+	return doc
+
+
+def create_expense_claim(employee, approver_1=None, approver_2=None, approver_3=None, travel_request=None, expenses=[], remark="", advances=[], file_url=None, cost_center = None):
+	company = frappe.db.get_single_value('Global Defaults', 'default_company')
+	print(company)
+	default_payable_account = frappe.get_cached_value('Company',  company,  "default_payable_account")
+	print(default_payable_account)
+	company_abbr = frappe.get_cached_value('Company',  company,  "abbr")
+	default_cost_center = "MKT - " + company_abbr
+	print(default_cost_center)
+
+	expense_claim = frappe.new_doc('Expense Claim')
+	expense_claim.company = company
+	expense_claim.employee = employee
+	expense_claim.approver_1 = approver_1
+	expense_claim.approver_2 = approver_2
+	expense_claim.approver_3 = approver_3
+	expense_claim.travel_request = travel_request
+	expense_claim.payable_account = default_payable_account
+	expense_claim.cost_center = default_cost_center
+
+	for advance in json.loads(advances): #json.loads(
+		expense_claim.append("advances", advance)
+	expense_claim.remark = remark
+	for expense in json.loads(expenses):
+		expense_claim.append("expenses", expense)
+
+	return expense_claim
+
+
+def attach_bills(expense_claim, file_url):
+	if not file_url:
+		return
+
+	files = []
+	is_private = False
+	doctype = "Expense Claim"
+	docname = expense_claim.name
+	fieldname = None
+	file_url = file_url
+	folder = "Home/Attachments"
+	method = None
+	content = None
+	filename = None
+
+	if 'file' in files:
+		file = files['file']
+		content = file.stream.read()
+		filename = file.filename
+
+	frappe.local.uploaded_file = content
+	frappe.local.uploaded_filename = filename
+
+	if frappe.session.user == 'Guest':
+		import mimetypes
+		filetype = mimetypes.guess_type(filename)[0]
+		if filetype not in ['image/png', 'image/jpeg', 'application/pdf']:
+			frappe.throw("You can only upload JPG, PNG or PDF files.")
+
+	ret = frappe.get_doc({
+		"doctype": "File",
+		"attached_to_doctype": doctype,
+		"attached_to_name": docname,
+		"attached_to_field": fieldname,
+		"folder": folder,
+		"file_name": filename,
+		"file_url": file_url,
+		"is_private": cint(is_private),
+		"content": content
+	})
+	ret.save(ignore_permissions=True)
+	return ret
+
+
+@frappe.whitelist()
+def get_expense_claim_list(username):
+	employee = frappe.db.get_list("Employee", filters={"user_id" : username})
+
+	if len(employee) == 0:
+		return {"error": "Employee not found"}
+	# ec.workflow_state, ec.travel_request, ec.approver_1, ec.approver_2, ec.approver_3, ec.approval_status, ec.is_paid
+
+	ecs = frappe.db.get_list("Expense Claim",
+		filters={
+        	'employee': employee[0].name
+    	},
+		fields=['name', 'posting_date', 'employee_name', 'status', 'total_sanctioned_amount', 'mode_of_payment', 'total_advance_amount', 'remark', 'total_claimed_amount', 'approval_status', 'total_amount_reimbursed', 'workflow_state', 'approver_1', 'approver_2', 'travel_request'],
+	)
+
+	for ec in ecs:
+		ec.expenses = frappe.db.get_all('Expense Claim Detail',
+				filters={ 'parent': ec.name },
+				fields=['expense_date','expense_type', 'default_account', 'description', 'amount', 'sanctioned_amount', 'cost_center']
+			)
+		if ec.travel_request :
+			ec.itinerary =  frappe.db.get_all('Travel Itinerary',
+				filters={ 'parent': ec.travel_request },
+				fields=['travel_to','travel_from', 'arrival_date', 'departure_date']
+			)
+	return ecs

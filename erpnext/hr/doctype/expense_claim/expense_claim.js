@@ -205,8 +205,10 @@ frappe.ui.form.on("Expense Claim", {
 		if (frm.doc.docstatus===1 && !cint(frm.doc.is_paid) && cint(frm.doc.grand_total) > 0
 				&& (cint(frm.doc.total_amount_reimbursed) < cint(frm.doc.total_sanctioned_amount))
 				&& frappe.model.can_create("Payment Entry")) {
-			frm.add_custom_button(__('Payment'),
-				function() { frm.events.make_payment_entry(frm); }, __('Create'));
+			// frm.add_custom_button(__('Payment'),
+			// 	function() { frm.events.make_payment_entry(frm); }, __('Create'));
+			frm.add_custom_button(__('Journal'),
+				function() { frm.events.make_journal_entry(frm); }, __('Create'));
 		}
 	},
 
@@ -239,6 +241,21 @@ frappe.ui.form.on("Expense Claim", {
 		if(frm.doc.__onload && frm.doc.__onload.make_payment_via_journal_entry) {
 			method = "erpnext.hr.doctype.expense_claim.expense_claim.make_bank_entry";
 		}
+		return frappe.call({
+			method: method,
+			args: {
+				"dt": frm.doc.doctype,
+				"dn": frm.doc.name
+			},
+			callback: function(r) {
+				var doclist = frappe.model.sync(r.message);
+				frappe.set_route("Form", doclist[0].doctype, doclist[0].name);
+			}
+		});
+	},
+
+	make_journal_entry: function(frm) {
+		var method = "erpnext.hr.doctype.expense_claim.expense_claim.make_bank_entry";
 		return frappe.call({
 			method: method,
 			args: {
@@ -335,6 +352,7 @@ frappe.ui.form.on("Expense Claim", {
 				callback: function(r, rt) {
 
 					if(r.message) {
+						let advance_account = null
 						$.each(r.message, function(i, d) {
 							var row = frappe.model.add_child(frm.doc, "Expense Claim Advance", "advances");
 							row.employee_advance = d.name;
@@ -343,14 +361,34 @@ frappe.ui.form.on("Expense Claim", {
 							row.advance_paid = d.paid_amount;
 							row.unclaimed_amount = flt(d.paid_amount) - flt(d.claimed_amount);
 							row.allocated_amount = 0;
+							advance_account = d.advance_account
 						});
 						refresh_field("advances");
+						debugger
+						frm.set_value("payable_account", advance_account)
+
 					}
+				}
+			});
+		}
+	},
+	after_workflow_action(frm){
+		if(frm.doc.workflow_state == "Finished" && frm.doc.advances){
+			frappe.call({
+				method: "erpnext.hr.doctype.employee_advance.employee_advance.set_workflow",
+				args: {
+					"expense_claim": frm.doc.name
+				},
+				callback: function(r) {
+					console.log(r)
+					debugger
+
 				}
 			});
 		}
 	}
 });
+
 
 frappe.ui.form.on("Expense Claim Detail", {
 	amount: function(frm, cdt, cdn) {
@@ -389,6 +427,7 @@ frappe.ui.form.on("Expense Claim Advance", {
 						child.allocated_amount = flt(r.message[0].paid_amount) - flt(r.message[0].claimed_amount);
 						frm.trigger('calculate_grand_total');
 						refresh_field("advances");
+						frm.set_value("payable_account", r.message[0].advance_account)
 					}
 				}
 			});
