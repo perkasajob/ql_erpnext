@@ -458,37 +458,39 @@ def get_expense_claim(
 	return expense_claim
 
 @frappe.whitelist()
-def create_expense_claim_dm(employee, approver_1=None, approver_2=None, approver_3=None, travel_request=None, expenses=[], remark="", advances=[], file_url =  None):
+def create_expense_claim_dm(employee, approver_1=None, approver_2=None, approver_3=None, travel_request=None, expenses=[], remark="", advances=[], file_urls =  None, cost_center = None):
 	if not employee:
 		return {"error": "employee not defined"}
 
-
-	doc = create_expense_claim( employee, approver_1, approver_2, approver_3, travel_request, expenses, remark, advances, file_url)
+	doc = create_expense_claim( employee, approver_1, approver_2, approver_3, travel_request, expenses, remark, advances, cost_center)
 
 	doc.insert(ignore_permissions=True)
 	doc.db_set("workflow_state", "Submitted")
-	attach_bills(doc, file_url)
+	for file_url in file_urls:
+		attach_bills(doc, file_url)
 	frappe.db.commit()
 	r = frappe.request
 	return doc
 
 @frappe.whitelist()
-def create_expense_claim_spv(employee, approver_1=None, approver_2=None, approver_3=None, travel_request=None, expenses=[], remark="", advances=[], file_url = None, cost_center = None):
+def create_expense_claim_spv(employee, approver_1=None, approver_2=None, approver_3=None, travel_request=None, expenses=[], remark="", advances=[], file_urls = None, cost_center = None):
 	if not employee:
 		return {"error": "employee not defined"}
 
-	doc = create_expense_claim( employee, approver_1, approver_2, approver_3, travel_request, expenses, remark, advances, file_url, cost_center)
+	doc = create_expense_claim( employee, approver_1, approver_2, approver_3, travel_request, expenses, remark, advances, cost_center)
 	doc.insert(ignore_permissions=True)
 	if not approver_2:
 		doc.db_set("workflow_state", "Received CSD")
 	else:
 		doc.db_set("workflow_state", "Approved 1")
-	attach_bills(doc, file_url)
+
+	for file_url in file_urls:
+		attach_bills(doc, file_url)
 	frappe.db.commit()
 	return doc
 
 
-def create_expense_claim(employee, approver_1=None, approver_2=None, approver_3=None, travel_request=None, expenses=[], remark="", advances=[], file_url=None, cost_center = None):
+def create_expense_claim(employee, approver_1=None, approver_2=None, approver_3=None, travel_request=None, expenses=[], remark="", advances=[], cost_center = None):
 	company = frappe.db.get_single_value('Global Defaults', 'default_company')
 	print(company)
 	default_payable_account = frappe.get_cached_value('Company',  company,  "default_payable_account")
@@ -505,7 +507,7 @@ def create_expense_claim(employee, approver_1=None, approver_2=None, approver_3=
 	expense_claim.approver_3 = approver_3
 	expense_claim.travel_request = travel_request
 	expense_claim.payable_account = default_payable_account
-	expense_claim.cost_center = default_cost_center
+	expense_claim.cost_center = cost_center if cost_center else default_cost_center
 
 	for advance in json.loads(advances): #json.loads(
 		expense_claim.append("advances", advance)
