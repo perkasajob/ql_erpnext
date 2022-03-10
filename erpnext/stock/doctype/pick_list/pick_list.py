@@ -151,12 +151,15 @@ def get_available_item_locations(item_code, from_warehouses, required_qty, compa
 		locations = get_available_item_locations_for_serialized_item(item_code, from_warehouses, required_qty, company)
 	elif frappe.get_cached_value('Item', item_code, 'has_batch_no'):
 		locations = get_available_item_locations_for_batched_item(item_code, from_warehouses, required_qty, company)
+		print("locations :")
+		print(locations)
 	else:
 		locations = get_available_item_locations_for_other_item(item_code, from_warehouses, required_qty, company)
 
 	total_qty_available = sum(location.get('qty') for location in locations)
 
 	remaining_qty = required_qty - total_qty_available
+	no_qty =  []
 
 	if remaining_qty > 0:
 		# frappe.msgprint(_('{0} units of {1} is not available.')

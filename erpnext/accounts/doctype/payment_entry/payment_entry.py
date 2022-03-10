@@ -916,6 +916,10 @@ def get_reference_details(reference_doctype, reference_name, party_account_curre
 				total_amount = ref_doc.total_sanctioned_amount
 			elif ref_doc.doctype == "Employee Advance":
 				total_amount = ref_doc.advance_amount
+			elif ref_doc.doctype == "Cash Expense Claim":
+				total_amount = ref_doc.total
+			elif ref_doc.doctype == "Cash Advance Request":
+				total_amount = ref_doc.credit_in_account_currency
 			else:
 				total_amount = ref_doc.base_grand_total
 			exchange_rate = 1
@@ -935,6 +939,10 @@ def get_reference_details(reference_doctype, reference_name, party_account_curre
 				- flt(ref_doc.get("total_amount+reimbursed")) - flt(ref_doc.get("total_advance_amount"))
 		elif reference_doctype == "Employee Advance":
 			outstanding_amount = ref_doc.advance_amount - flt(ref_doc.paid_amount)
+		elif reference_doctype == "Cash Expense Claim":
+			outstanding_amount = ref_doc.outstanding_amount
+		elif reference_doctype == "Cash Advance Request":
+			outstanding_amount = ref_doc.requested_amount - flt(ref_doc.credit_in_account_currency)
 		else:
 			outstanding_amount = flt(total_amount) - flt(ref_doc.advance_paid)
 	else:
@@ -961,7 +969,7 @@ def get_payment_entry(dt, dn, party_amount=None, bank_account=None, bank_amount=
 		party_type = "Customer"
 	elif dt in ("Purchase Invoice", "Purchase Order"):
 		party_type = "Supplier"
-	elif dt in ("Expense Claim", "Employee Advance"):
+	elif dt in ("Expense Claim", "Employee Advance", "Cash Advance Request", "Cash Expense Claim"):
 		party_type = "Employee"
 	elif dt in ("Fees"):
 		party_type = "Student"
@@ -979,6 +987,11 @@ def get_payment_entry(dt, dn, party_amount=None, bank_account=None, bank_amount=
 		party_account = doc.advance_account
 	elif dt == "Expense Claim":
 		party_account = doc.payable_account
+	elif dt == "Cash Advance Request":
+		party_account = doc.advance_account
+	elif dt == "Cash Expense Claim":
+		party_account = doc.account
+		doc.conversion_rate = 1
 	else:
 		party_account = get_party_account(party_type, doc.get(party_type.lower()), doc.company)
 
@@ -1011,6 +1024,12 @@ def get_payment_entry(dt, dn, party_amount=None, bank_account=None, bank_amount=
 	elif dt == "Employee Advance":
 		grand_total = doc.advance_amount
 		outstanding_amount = flt(doc.advance_amount) - flt(doc.paid_amount)
+	elif dt in ("Cash Expense Claim"):
+		grand_total = doc.total
+		outstanding_amount = doc.outstanding_amount
+	elif dt == "Cash Advance Request":
+		grand_total = flt(doc.credit_in_account_currency)
+		outstanding_amount = flt(doc.credit_in_account_currency)
 	elif dt == "Fees":
 		grand_total = doc.grand_total
 		outstanding_amount = doc.outstanding_amount

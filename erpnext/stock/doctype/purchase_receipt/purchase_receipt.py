@@ -197,6 +197,9 @@ class PurchaseReceipt(BuyingController):
 		self.make_gl_entries_on_cancel()
 		self.delete_auto_created_batches()
 
+		# remove stock entry caused by QI/PR cancellation with 'remarks': PR.name
+		self.delete_stock_entry_qi()
+
 	def get_current_stock(self):
 		for d in self.get('supplied_items'):
 			if self.supplier_warehouse:
@@ -362,6 +365,9 @@ class PurchaseReceipt(BuyingController):
 				"\n".join(warehouse_with_no_account))
 
 		return process_gl_map(gl_entries)
+
+	def delete_stock_entry_qi(self)		:
+		frappe.db.sql('''DELETE FROM `tabStock Entry` WHERE remarks=%s''', (self.name))
 
 	def get_asset_gl_entry(self, gl_entries):
 		for item in self.get("items"):

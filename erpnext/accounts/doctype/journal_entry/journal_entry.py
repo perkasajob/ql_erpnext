@@ -9,6 +9,7 @@ from erpnext.controllers.accounts_controller import AccountsController
 from erpnext.accounts.utils import get_balance_on, get_account_currency
 from erpnext.accounts.party import get_party_account
 from erpnext.hr.doctype.expense_claim.expense_claim import update_reimbursed_amount
+
 from erpnext.accounts.doctype.invoice_discounting.invoice_discounting import get_party_account_based_on_invoice_discounting
 
 from six import string_types, iteritems
@@ -77,6 +78,9 @@ class JournalEntry(AccountsController):
 			if d.is_advance:
 				if d.reference_type in ("Sales Order", "Purchase Order", "Employee Advance"):
 					advance_paid.setdefault(d.reference_type, []).append(d.reference_name)
+				if d.reference_type == "Employee Advance" and d.party_type == 'Employee' and d.credit_in_account_currency > 0 :
+					from erpnext.hr.doctype.employee_advance.employee_advance import update_employee_advance_return
+					update_employee_advance_return(d.reference_name)
 
 		for voucher_type, order_list in iteritems(advance_paid):
 			for voucher_no in list(set(order_list)):
@@ -1047,4 +1051,4 @@ def make_reverse_journal_entry(source_name, target_doc=None):
 		},
 	}, target_doc)
 
-	return doclist 
+	return doclist

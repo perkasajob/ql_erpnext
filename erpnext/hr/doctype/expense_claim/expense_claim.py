@@ -466,7 +466,7 @@ def create_expense_claim_dm(employee, approver_1=None, approver_2=None, approver
 
 	doc.insert(ignore_permissions=True)
 	doc.db_set("workflow_state", "Submitted")
-	for file_url in file_urls:
+	for file_url in json.loads(file_urls):
 		attach_bills(doc, file_url)
 	frappe.db.commit()
 	r = frappe.request
@@ -484,7 +484,7 @@ def create_expense_claim_spv(employee, approver_1=None, approver_2=None, approve
 	else:
 		doc.db_set("workflow_state", "Approved 1")
 
-	for file_url in file_urls:
+	for file_url in json.loads(file_urls):
 		attach_bills(doc, file_url)
 	frappe.db.commit()
 	return doc

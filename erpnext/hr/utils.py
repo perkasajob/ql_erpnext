@@ -468,3 +468,18 @@ def get_previous_claimed_amount(employee, payroll_period, non_pro_rata=False, co
 	if sum_of_claimed_amount and flt(sum_of_claimed_amount[0].total_amount) > 0:
 		total_claimed_amount = sum_of_claimed_amount[0].total_amount
 	return total_claimed_amount
+
+
+@frappe.whitelist()
+def get_holidays(holiday_list, start_date, end_date):
+	holidays = frappe.db.sql_list('''select holiday_date from `tabHoliday`
+		where
+			parent=%(holiday_list)s
+			and holiday_date >= %(start_date)s
+			and holiday_date <= %(end_date)s''', {
+				"holiday_list": holiday_list,
+				"start_date": start_date,
+				"end_date": end_date
+			})
+
+	return holidays
