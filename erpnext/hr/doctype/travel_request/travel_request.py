@@ -58,13 +58,6 @@ def create_travel_request_spv(employee, itinerary=[], costings=[], description=N
 
 
 def create_travel_request(employee, itinerary=[], costings=[], description=None, purpose_of_travel=None):
-	print(employee)
-	print(costings)
-	print(purpose_of_travel)
-	print(description)
-	print(itinerary)
-
-	print("==========================================")
 
 	company = frappe.db.get_single_value('Global Defaults', 'default_company')
 	print(company)

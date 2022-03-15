@@ -99,7 +99,7 @@ def get_columns():
 		{"label": _("Serial No"), "fieldname": "serial_no", "width": 100},
 		{"label": _("Balance Serial No"), "fieldname": "balance_serial_no", "width": 100},
 		{"label": _("Project"), "fieldname": "project", "fieldtype": "Link", "options": "Project", "width": 100},
-		{"label": _("Company"), "fieldname": "company", "fieldtype": "Link", "options": "Company", "width": 110}
+		# {"label": _("Company"), "fieldname": "company", "fieldtype": "Link", "options": "Company", "width": 110}
 	]
 
 	return columns

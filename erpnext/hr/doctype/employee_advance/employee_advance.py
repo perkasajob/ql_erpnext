@@ -239,6 +239,7 @@ def create_employee_advance_dm(employee, purpose, advance_amount, is_upc=0, appr
 		travel_request = create_travel_request(employee, approver_1, itinerary, costings, description, purpose_of_travel, cost_center)
 		travel_request.insert(ignore_permissions=True)
 		travel_request.db_set("workflow_state", "Submitted")
+		frappe.db.commit()
 
 	doc = create_employee_advance(employee, purpose, travel_request, advance_amount, approver_1, approver_2, advance_account, details, cost_center)
 	doc.insert(ignore_permissions=True)
@@ -257,6 +258,7 @@ def create_employee_advance_spv(employee, purpose, advance_amount, is_upc=0, app
 		travel_request = create_travel_request(employee, approver_1, itinerary, costings, description, purpose_of_travel, cost_center)
 		travel_request.insert(ignore_permissions=True)
 		travel_request.db_set("workflow_state", "Approved")
+		frappe.db.commit()
 
 	doc = create_employee_advance(employee, purpose, travel_request, advance_amount, approver_1, approver_2, advance_account, details, cost_center)
 	doc.insert(ignore_permissions=True)
