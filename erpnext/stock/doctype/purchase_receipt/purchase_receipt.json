@@ -494,6 +494,7 @@
    "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "supplied_items",
    "fieldtype": "Table",
    "label": "Supplied Items",
@@ -1071,8 +1072,7 @@
  "icon": "fa fa-truck",
  "idx": 261,
  "is_submittable": 1,
- "links": [],
- "modified": "2020-07-15 12:49:42.095297",
+ "modified": "2022-10-05 12:12:21.038149",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Purchase Receipt",

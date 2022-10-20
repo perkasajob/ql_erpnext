@@ -20,7 +20,7 @@ def get_default_company(user=None):
 	else:
 		default_company = frappe.db.get_single_value('Global Defaults', 'default_company')
 
-	return default_company
+	return frappe.db.get_single_value('Global Defaults', 'default_company')
 
 
 def get_default_currency():

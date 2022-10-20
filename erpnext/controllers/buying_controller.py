@@ -289,7 +289,7 @@ class BuyingController(StockController):
 					title=_("Limit Crossed"))
 
 			transferred_batch_qty_map = get_transferred_batch_qty_map(item.purchase_order, item.item_code)
-			# backflushed_batch_qty_map = get_backflushed_batch_qty_map(item.purchase_order, item.item_code)
+			backflushed_batch_qty_map = get_backflushed_batch_qty_map(item.purchase_order, item.item_code)
 
 			for raw_material in transferred_raw_materials + non_stock_items:
 				rm_item_key = (raw_material.rm_item_code, item.item_code, item.purchase_order)
@@ -341,7 +341,8 @@ class BuyingController(StockController):
 
 		rm.reference_name = fg_item_doc.name
 		rm.required_qty = qty
-		rm.consumed_qty = qty
+		if not rm.consumed_qty:
+			rm.consumed_qty = qty
 
 		if not raw_material_data.get('non_stock_item'):
 			from erpnext.stock.utils import get_incoming_rate
@@ -358,7 +359,7 @@ class BuyingController(StockController):
 				rm.rate = get_valuation_rate(raw_material_data.rm_item_code, self.supplier_warehouse,
 					self.doctype, self.name, currency=self.company_currency, company=self.company)
 
-		rm.amount = qty * flt(rm.rate)
+		rm.amount = rm.consumed_qty * flt(rm.rate)
 		fg_item_doc.rm_supp_cost += rm.amount
 
 	def update_raw_materials_supplied_based_on_bom(self, item, raw_material_table):
@@ -420,7 +421,8 @@ class BuyingController(StockController):
 			rm.conversion_factor = conversion_factor
 
 			if self.doctype in ["Purchase Receipt", "Purchase Invoice"]:
-				rm.consumed_qty = required_qty
+				if not rm.consumed_qty:
+					rm.consumed_qty = required_qty
 				rm.description = bom_item.description
 				if item.batch_no and frappe.db.get_value("Item", rm.rm_item_code, "has_batch_no") and not rm.batch_no:
 					rm.batch_no = item.batch_no
@@ -433,7 +435,7 @@ class BuyingController(StockController):
 					"warehouse": self.supplier_warehouse,
 					"posting_date": self.posting_date,
 					"posting_time": self.posting_time,
-					"qty": -1 * required_qty,
+					"qty": -1 * rm.consumed_qty,
 					"serial_no": rm.serial_no
 				})
 				if not rm.rate:

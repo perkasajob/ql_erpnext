@@ -13,6 +13,9 @@
   "uom",
   "projected_qty",
   "actual_qty",
+  "safety_qty",
+  "lead_time_days",
+  "consumed_daily",
   "item_details",
   "description",
   "min_order_qty",
@@ -119,10 +122,28 @@
    "label": "UOM",
    "options": "UOM",
    "read_only": 1
+  },
+  {
+   "fieldname": "safety_qty",
+   "fieldtype": "Float",
+   "label": "Safety Qty",
+   "read_only": 1
+  },
+  {
+   "fieldname": "lead_time_days",
+   "fieldtype": "Int",
+   "label": "Lead Time Days",
+   "read_only": 1
+  },
+  {
+   "fieldname": "consumed_daily",
+   "fieldtype": "Float",
+   "label": "Consumed Daily",
+   "read_only": 1
   }
  ],
  "istable": 1,
- "modified": "2019-11-08 15:15:43.979360",
+ "modified": "2022-09-21 11:39:37.346506",
  "modified_by": "Administrator",
  "module": "Manufacturing",
  "name": "Material Request Plan Item",

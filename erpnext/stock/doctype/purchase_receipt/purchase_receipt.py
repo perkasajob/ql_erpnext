@@ -631,6 +631,39 @@ def make_stock_entry(source_name,target_doc=None):
 
 	return doclist
 
+
+@frappe.whitelist()
+def make_consumed_qty_subcontract(source_name,target_doc=None):
+		def set_missing_values(source, target):
+			target.stock_entry_type = 'Material Consumption at Subcontractor'
+
+		def update_warehouse(source_doc, target_doc, source_parent):
+			target_doc.s_warehouse = source_parent.supplier_warehouse
+
+		doclist = get_mapped_doc("Purchase Receipt", source_name,{
+			"Purchase Receipt": {
+				"doctype": "Stock Entry",
+				"field_map": {
+					"name": "purchase_receipt_no",
+					"supplier_warehouse": "from_warehouse"
+				},
+			},
+			"Purchase Receipt Item Supplied": {
+				"doctype": "Stock Entry Detail",
+				"field_map": {
+					"parent": "reference_purchase_receipt",
+					"rm_item_code": "item_code",
+					"required_qty": "qty",
+					"stock_uom": "uom",
+					"batch_no": "batch_no"
+				},
+				"postprocess": update_warehouse,
+				"add_if_empty": True
+			},
+		}, target_doc, set_missing_values)
+
+		return doclist
+
 def get_item_account_wise_additional_cost(purchase_document):
 	landed_cost_vouchers = frappe.get_all("Landed Cost Purchase Receipt", fields=["parent"],
 		filters = {"receipt_document": purchase_document, "docstatus": 1})

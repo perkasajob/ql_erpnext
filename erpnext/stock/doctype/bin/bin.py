@@ -132,5 +132,66 @@ class Bin(Document):
 		self.set_projected_qty()
 		self.db_set('projected_qty', self.projected_qty)
 
+	def consumed_qty_for_sub_contracting(self):
+			#reserved qty
+			reserved_qty_for_sub_contract = frappe.db.sql('''
+				select ifnull(sum(itemsup.required_qty),0)
+				from `tabPurchase Order` po, `tabPurchase Order Item Supplied` itemsup
+				where
+					itemsup.rm_item_code = %s
+					and itemsup.parent = po.name
+					and po.docstatus = 1
+					and po.is_subcontracted = 'Yes'
+					and po.status != 'Closed'
+					and po.per_received < 100
+					and itemsup.reserve_warehouse = %s''', (self.item_code, self.warehouse))[0][0]
+
+			#Get Transferred Entries
+			materials_transferred = frappe.db.sql("""
+				select
+					ifnull(sum(transfer_qty),0)
+				from
+					`tabStock Entry` se, `tabStock Entry Detail` sed, `tabPurchase Order` po
+				where
+					se.docstatus=1
+					and se.purpose='Send to Subcontractor'
+					and ifnull(se.purchase_order, '') !=''
+					and (sed.item_code = %(item)s or sed.original_item = %(item)s)
+					and se.name = sed.parent
+					and se.purchase_order = po.name
+					and po.docstatus = 1
+					and po.is_subcontracted = 'Yes'
+					and po.status != 'Closed'
+					and po.per_received < 100
+			""", {'item': self.item_code})[0][0]
+
+			#Get Consumed Entries
+			materials_consumed = frappe.db.sql("""
+				select
+					ifnull(sum(transfer_qty),0)
+				from
+					`tabStock Entry` se, `tabStock Entry Detail` sed, `tabPurchase Receipt` pr
+				where
+					se.docstatus=1
+					and se.stock_entry_type = 'Material Consumption at Subcontractor'
+					and (sed.item_code = %(item)s or sed.original_item = %(item)s)
+					and se.name = sed.parent
+					and sed.reference_purchase_receipt = pr.name
+					and pr.is_subcontracted = 'Yes'
+			""", {'item': self.item_code})[0][0]
+			# and pr.docstatus = 1
+
+			if reserved_qty_for_sub_contract > materials_transferred:
+				reserved_qty_for_sub_contract = reserved_qty_for_sub_contract - materials_transferred - materials_consumed
+			else:
+				reserved_qty_for_sub_contract = 0
+
+			if reserved_qty_for_sub_contract < 0:
+				frappe.throw("reserved_qty_for_sub_contract < 0")
+
+			self.db_set('reserved_qty_for_sub_contract', reserved_qty_for_sub_contract)
+			self.set_projected_qty()
+			self.db_set('projected_qty', self.projected_qty)
+
 def on_doctype_update():
 	frappe.db.add_index("Bin", ["item_code", "warehouse"])

@@ -12,6 +12,7 @@
   "col_break1",
   "required_qty",
   "consumed_qty",
+  "supplied_qty",
   "stock_uom",
   "rate",
   "amount",
@@ -82,11 +83,11 @@
   {
    "fieldname": "consumed_qty",
    "fieldtype": "Float",
+   "in_list_view": 1,
    "label": "Consumed Qty",
    "oldfieldname": "consumed_qty",
    "oldfieldtype": "Currency",
-   "read_only": 1,
-   "reqd": 1
+   "read_only": 1
   },
   {
    "fieldname": "stock_uom",
@@ -152,11 +153,17 @@
    "oldfieldname": "bom_detail_no",
    "oldfieldtype": "Data",
    "read_only": 1
+  },
+  {
+   "fieldname": "supplied_qty",
+   "fieldtype": "Float",
+   "label": "Supplied Qty",
+   "read_only": 1
   }
  ],
  "idx": 1,
  "istable": 1,
- "modified": "2019-11-21 16:25:29.909112",
+ "modified": "2022-10-13 14:34:14.157578",
  "modified_by": "Administrator",
  "module": "Buying",
  "name": "Purchase Receipt Item Supplied",

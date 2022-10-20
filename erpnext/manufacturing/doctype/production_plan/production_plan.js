@@ -1,6 +1,8 @@
 // Copyright (c) 2017, Frappe Technologies Pvt. Ltd. and contributors
 // For license information, please see license.txt
 
+var constConfidenceLvl = {"84%": 1, "90%":1.26, "95%":1.65, "99%": 2.33}
+
 frappe.ui.form.on('Production Plan', {
 	setup: function(frm) {
 		frm.custom_make_buttons = {
@@ -191,7 +193,7 @@ frappe.ui.form.on('Production Plan', {
 
 	get_items_for_mr: function(frm) {
 		const set_fields = ['actual_qty', 'item_code','item_name', 'description', 'uom',
-			'min_order_qty', 'quantity', 'sales_order', 'warehouse', 'projected_qty', 'material_request_type'];
+			'min_order_qty', 'quantity', 'sales_order', 'warehouse', 'projected_qty', 'safety_qty', 'lead_time_days', 'consumed_daily', 'material_request_type'];
 		frappe.call({
 			method: "erpnext.manufacturing.doctype.production_plan.production_plan.get_items_for_material_requests",
 			freeze: true,
@@ -211,6 +213,17 @@ frappe.ui.form.on('Production Plan', {
 				refresh_field('mr_items');
 			}
 		});
+
+		// frappe.call({
+		// 	method: "erpnext.manufacturing.doctype.production_plan.production_plan.get_safety_qty",
+		// 	freeze: true,
+		// 	args: {doc: frm.doc},
+		// 	callback: function(r) {
+		// 		let {qty, std_qty} = r.message;
+		// 		let safety_qty = qty + std_qty * frm.doc.confidence_level
+		// 		frappe.model.set_value(cdt, cdn, 'safety_qty', safety_qty);
+		// 	}
+		// })
 	},
 
 	for_warehouse: function(frm) {
@@ -289,12 +302,26 @@ frappe.ui.form.on("Material Request Plan Item", {
 					for_warehouse: row.warehouse
 				},
 				callback: function(r) {
-					let {projected_qty, actual_qty} = r.message;
+					let {projected_qty, actual_qty, safety_qty} = r.message;
 
 					frappe.model.set_value(cdt, cdn, 'projected_qty', projected_qty);
 					frappe.model.set_value(cdt, cdn, 'actual_qty', actual_qty);
+					// frappe.model.set_value(cdt, cdn, 'safety_qty', safety_qty);
 				}
 			})
+			// frappe.call({
+			// 	method: "erpnext.manufacturing.doctype.production_plan.production_plan.get_safety_qty",
+			// 	args: {
+			// 		row: row,
+			// 		company: frm.doc.company,
+			// 		for_warehouse: row.warehouse
+			// 	},
+			// 	callback: function(r) {
+			// 		let {qty, std_qty} = r.message;
+			// 		let safety_qty = qty + std_qty * frm.doc.confidence_level
+			// 		frappe.model.set_value(cdt, cdn, 'safety_qty', safety_qty);
+			// 	}
+			// })
 		}
 	}
 });

@@ -1,5 +1,4 @@
 {
- "actions": [],
  "autoname": "naming_series:",
  "creation": "2017-10-29 11:53:09.523362",
  "doctype": "DocType",
@@ -37,6 +36,7 @@
   "download_materials_required",
   "get_items_for_mr",
   "section_break_27",
+  "confidence_level",
   "mr_items",
   "other_details",
   "total_planned_qty",
@@ -291,12 +291,17 @@
    "options": "Production Plan",
    "print_hide": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "confidence_level",
+   "fieldtype": "Select",
+   "label": "Confidence Level",
+   "options": "84%\n90%\n95%\n99%"
   }
  ],
  "icon": "fa fa-calendar",
  "is_submittable": 1,
- "links": [],
- "modified": "2019-12-04 15:58:50.940460",
+ "modified": "2022-09-20 16:10:12.131092",
  "modified_by": "Administrator",
  "module": "Manufacturing",
  "name": "Production Plan",

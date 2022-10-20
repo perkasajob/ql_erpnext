@@ -108,12 +108,12 @@ class AccountsController(TransactionBase):
 				self.validate_deferred_start_and_end_date()
 
 		validate_regional(self)
-		
+
 		validate_einvoice_fields(self)
 
 		if self.doctype != 'Material Request':
 			apply_pricing_rule_on_transaction(self)
-	
+
 	def before_cancel(self):
 		validate_einvoice_fields(self)
 
@@ -650,7 +650,7 @@ class AccountsController(TransactionBase):
 						total_billed_amt = abs(total_billed_amt)
 						max_allowed_amt = abs(max_allowed_amt)
 
-					if total_billed_amt - max_allowed_amt > 0.01:
+					if total_billed_amt - max_allowed_amt > 1:
 						frappe.throw(_("Cannot overbill for Item {0} in row {1} more than {2}. To allow over-billing, please set allowance in Accounts Settings")
 							.format(item.item_code, item.idx, max_allowed_amt))
 
@@ -1270,7 +1270,7 @@ def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name, chil
 			)
 
 	def get_new_child_item(item_row):
-		child_doctype = "Sales Order Item" if parent_doctype == "Sales Order" else "Purchase Order Item" 
+		child_doctype = "Sales Order Item" if parent_doctype == "Sales Order" else "Purchase Order Item"
 		return set_order_defaults(parent_doctype, parent_doctype_name, child_doctype, child_docname, item_row)
 
 	def validate_quantity(child_item, d):
@@ -1334,7 +1334,7 @@ def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name, chil
 				child_item.conversion_factor = 1
 			else:
 				child_item.conversion_factor = flt(d.get('conversion_factor'), conv_fac_precision)
-		
+
 		if d.get("uom"):
 			child_item.uom = d.get("uom")
 			conversion_factor = flt(get_conversion_factor(child_item.item_code, child_item.uom).get("conversion_factor"))
