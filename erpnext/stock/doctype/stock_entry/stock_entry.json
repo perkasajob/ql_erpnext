@@ -156,6 +156,7 @@
    "search_index": 1
   },
   {
+   "depends_on": "eval:doc.purpose==\"Send to Subcontractor\"",
    "fieldname": "purchase_order",
    "fieldtype": "Link",
    "label": "Purchase Order",
@@ -183,6 +184,7 @@
    "print_hide": 1
   },
   {
+   "depends_on": "eval:doc.purpose==\"Purchase Return\"",
    "fieldname": "purchase_receipt_no",
    "fieldtype": "Link",
    "label": "Purchase Receipt No",
@@ -625,7 +627,7 @@
  "icon": "fa fa-file-text",
  "idx": 1,
  "is_submittable": 1,
- "modified": "2022-10-13 21:19:57.830383",
+ "modified": "2022-10-21 14:20:41.248716",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Stock Entry",

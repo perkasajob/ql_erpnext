@@ -24,10 +24,23 @@ def make_sl_entries(sl_entries, is_amended=None, allow_negative_stock=False, via
 		if cancel:
 			set_as_cancel(sl_entries[0].get('voucher_no'), sl_entries[0].get('voucher_type'))
 
+		batch_nr = ''
+
 		for sle in sl_entries:
 			sle_id = None
 			if sle.get('is_cancelled') == 'Yes':
 				sle['actual_qty'] = -flt(sle['actual_qty'])
+
+			#Tunnel to NLP
+			if (sle['warehouse'] == "Gudang Quantum Lab - QL" or sle['warehouse'][0:2] == "N "):
+				if batch_nr:
+					sle['batch_nr'] = batch_nr
+				elif sle['actual_qty'] > 0:
+					sle['batch_nr'] = sle['batch_no'] + str(frappe.db.count('Stock Ledger Entry', {'warehouse': sle['warehouse'], 'batch_no': sle['batch_no'], 'actual_qty': ['>', 0]})+1)
+				else:
+					sle['batch_nr'] = sle['batch_no'] + str(frappe.db.count('Stock Ledger Entry', {'warehouse': sle['warehouse'], 'batch_no': sle['batch_no'], 'actual_qty': ['<', 0]})+1)
+				batch_nr = sle['batch_nr']
+			#End of Tunnel NLP
 
 			if sle.get("actual_qty") or sle.get("voucher_type")=="Stock Reconciliation":
 				sle_id = make_entry(sle, allow_negative_stock, via_landed_cost_voucher)
