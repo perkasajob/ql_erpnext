@@ -24,7 +24,7 @@ def make_sl_entries(sl_entries, is_amended=None, allow_negative_stock=False, via
 		if cancel:
 			set_as_cancel(sl_entries[0].get('voucher_no'), sl_entries[0].get('voucher_type'))
 
-		batch_nr = ''
+		batch_nr = {}
 
 		for sle in sl_entries:
 			sle_id = None
@@ -33,19 +33,19 @@ def make_sl_entries(sl_entries, is_amended=None, allow_negative_stock=False, via
 
 			#Tunnel to NLP
 			if (sle['warehouse'] == "Gudang Quantum Lab - QL" or sle['warehouse'][0:2] == "N "):
-				if batch_nr:
-					sle['batch_nr'] = batch_nr
+				if batch_nr.get(sle['item_code']):
+					sle['batch_nr'] = batch_nr.get(sle['item_code'])
 				elif sle['actual_qty'] > 0:
 					sle['batch_nr'] = sle['batch_no'] + str(frappe.db.count('Stock Ledger Entry', {'warehouse': sle['warehouse'], 'batch_no': sle['batch_no'], 'actual_qty': ['>', 0]})+1)
 				else:
 					sle['batch_nr'] = sle['batch_no'] + str(frappe.db.count('Stock Ledger Entry', {'warehouse': sle['warehouse'], 'batch_no': sle['batch_no'], 'actual_qty': ['<', 0]})+1)
-				batch_nr = sle['batch_nr']
+				batch_nr[sle['item_code']] = sle['batch_nr']
 				frappe.db.sql("""update `tabStock Entry Detail` set batch_nr=%s
-					where parent=%s and name=%s""",
-					(batch_nr, sle['voucher_no'], sle['voucher_detail_no']))
+					where parent=%s and name=%s and item_code=%s""",
+					(batch_nr.get(sle['item_code']), sle['voucher_no'], sle['voucher_detail_no'], sle['item_code']))
 				frappe.db.sql("""update `tabQuality Inspection` set batch_nr=%s
 					where reference_name=%s and item_code=%s""",
-					(batch_nr, sle['voucher_no'], sle['item_code']))
+					(batch_nr.get(sle['item_code']), sle['voucher_no'], sle['item_code']))
 			#End of Tunnel NLP
 
 			if sle.get("actual_qty") or sle.get("voucher_type")=="Stock Reconciliation":
