@@ -24,6 +24,7 @@ def make_sl_entries(sl_entries, is_amended=None, allow_negative_stock=False, via
 		if cancel:
 			set_as_cancel(sl_entries[0].get('voucher_no'), sl_entries[0].get('voucher_type'))
 
+		bnr = ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","X","Y","Z"]
 		batch_nr = {}
 
 		for sle in sl_entries:
@@ -36,9 +37,9 @@ def make_sl_entries(sl_entries, is_amended=None, allow_negative_stock=False, via
 				if batch_nr.get(sle['item_code']):
 					sle['batch_nr'] = batch_nr.get(sle['item_code'])
 				elif sle['actual_qty'] > 0:
-					sle['batch_nr'] = sle['batch_no'] + str(frappe.db.count('Stock Ledger Entry', {'warehouse': sle['warehouse'], 'batch_no': sle['batch_no'], 'actual_qty': ['>', 0]})+1)
+					sle['batch_nr'] = sle['batch_no'] + bnr[frappe.db.count('Stock Ledger Entry', {'warehouse': sle['warehouse'], 'batch_no': sle['batch_no'], 'actual_qty': ['>', 0], 'docstatus' :1})]
 				else:
-					sle['batch_nr'] = sle['batch_no'] + str(frappe.db.count('Stock Ledger Entry', {'warehouse': sle['warehouse'], 'batch_no': sle['batch_no'], 'actual_qty': ['<', 0]})+1)
+					sle['batch_nr'] = sle['batch_no'] + bnr[frappe.db.count('Stock Ledger Entry', {'warehouse': sle['warehouse'], 'batch_no': sle['batch_no'], 'actual_qty': ['<', 0], 'docstatus' :1})]
 				batch_nr[sle['item_code']] = sle['batch_nr']
 				frappe.db.sql("""update `tabStock Entry Detail` set batch_nr=%s
 					where parent=%s and name=%s and item_code=%s""",
