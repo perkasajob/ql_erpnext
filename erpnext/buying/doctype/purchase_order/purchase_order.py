@@ -106,7 +106,7 @@ class PurchaseOrder(BuyingController):
 		self.party_account_currency = get_party_account_currency("Supplier", self.supplier, self.company)
 
 		allow_suppliers = frappe.db.sql("""SELECT COUNT(*) as found FROM `tabItem Supplier` WHERE parent IN (%s) AND supplier = %s""" % (', '.join(['%s']* len(self.items)), '%s'), tuple([i.item_code for i in self.items] + [self.supplier]), as_dict=True)
-		if allow_suppliers[0].found == 0:
+		if allow_suppliers[0].found == 0 and self.supplier_restrict:
 			frappe.throw(_("Cannot use supplier {0} due to ASL item supplier restriction.")
 					.format(self.supplier))
 
