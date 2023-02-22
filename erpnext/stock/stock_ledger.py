@@ -32,7 +32,7 @@ def make_sl_entries(sl_entries, is_amended=None, allow_negative_stock=False, via
 				sle['actual_qty'] = -flt(sle['actual_qty'])
 
 			#Tunnel to NLP
-			if (sle['warehouse'] == "Gudang Quantum Lab - QL" or sle['warehouse'][0:2] == "N "):
+			if ((sle['warehouse'] == "Gudang Quantum Lab - QL" or sle['warehouse'][0:2] == "N ") and sle['batch_no']):
 				if batch_nr.get(sle['item_code']):
 					sle['batch_nr'] = batch_nr.get(sle['item_code'])
 				elif sle['actual_qty'] > 0:
