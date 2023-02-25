@@ -45,7 +45,9 @@ class StockLedgerEntry(Document):
 
 	#check for item quantity available in stock
 	def actual_amt_check(self):
-		if self.batch_no and not self.get("allow_negative_stock"):
+		if self.batch_no and not self.get("allow_negative_stock") \
+				and not frappe.session.user == frappe.db.get_single_value('QL Settings', 'user_allow_negative_stock') :
+
 			batch_bal_after_transaction = flt(frappe.db.sql("""select sum(actual_qty)
 				from `tabStock Ledger Entry`
 				where warehouse=%s and item_code=%s and batch_no=%s""",
