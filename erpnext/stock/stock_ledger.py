@@ -24,7 +24,7 @@ def make_sl_entries(sl_entries, is_amended=None, allow_negative_stock=False, via
 		if cancel:
 			set_as_cancel(sl_entries[0].get('voucher_no'), sl_entries[0].get('voucher_type'))
 
-		bnr = [str(i) for i in range(0, 10)] + ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","X","Y","Z"]
+		bnr = [str(i) for i in range(1, 10)] + ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","X","Y","Z"]
 		batch_nr = {}
 
 		for sle in sl_entries:
