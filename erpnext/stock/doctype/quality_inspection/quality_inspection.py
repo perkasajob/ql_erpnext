@@ -27,6 +27,7 @@ class QualityInspection(Document):
 			child.specification = d.specification
 			child.value = d.value
 			child.status = "Accepted"
+			child.method_reference = d.method_reference
 
 	def get_quality_inspection_template(self):
 		template = ''

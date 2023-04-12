@@ -12,5 +12,5 @@ class QualityInspectionTemplate(Document):
 def get_template_details(template):
 	if not template: return []
 
-	return frappe.get_all('Item Quality Inspection Parameter', fields=["specification", "value"],
+	return frappe.get_all('Item Quality Inspection Parameter', fields=["specification", "value", "method_reference"],
 		filters={'parenttype': 'Quality Inspection Template', 'parent': template}, order_by="idx")
