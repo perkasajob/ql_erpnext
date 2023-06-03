@@ -194,10 +194,11 @@ class PurchaseInvoice(BuyingController):
 		})
 
 		if cint(frappe.db.get_single_value('Buying Settings', 'maintain_same_rate')) and not self.is_return:
-			self.validate_rate_with_reference_doc([
-				["Purchase Order", "purchase_order", "po_detail"],
-				["Purchase Receipt", "purchase_receipt", "pr_detail"]
-			])
+			if self.supplier not in [s.name for s in  frappe.db.get_list("Supplier", {"maintain_same_purchase_rate": 1}, "name")]:
+				self.validate_rate_with_reference_doc([
+					["Purchase Order", "purchase_order", "po_detail"],
+					["Purchase Receipt", "purchase_receipt", "pr_detail"]
+				])
 
 	def validate_warehouse(self):
 		if self.update_stock:

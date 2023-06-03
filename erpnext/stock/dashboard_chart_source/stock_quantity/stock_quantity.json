@@ -1,0 +1,13 @@
+{
+ "creation": "2023-02-16 14:09:08.511259",
+ "docstatus": 0,
+ "doctype": "Dashboard Chart Source",
+ "idx": 0,
+ "modified": "2023-02-16 14:09:35.546467",
+ "modified_by": "Administrator",
+ "module": "Stock",
+ "name": "Stock Quantity",
+ "owner": "Administrator",
+ "source_name": "Stock Quantity",
+ "timeseries": 0
+}
