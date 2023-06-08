@@ -514,6 +514,47 @@ def get_items(warehouse, posting_date, posting_time, company):
 	return res
 
 @frappe.whitelist()
+def get_pi_recon(source_name):
+	items = frappe.db.sql("""
+					SELECT
+						sle.item_code,
+						i.item_name,
+						sle.batch_no,
+						sle.warehouse,
+						SUM(sle.actual_qty) as qty,
+						sle.stock_uom as uom,
+						pii.rate
+					FROM
+						`tabStock Ledger Entry` sle
+					INNER JOIN
+						`tabItem` i ON sle.item_code = i.item_code
+					INNER JOIN
+						`tabBatch` b ON sle.batch_no = b.name
+					INNER JOIN
+						`tabPurchase Receipt Item` pri ON pri.batch_no = sle.batch_no
+					INNER JOIN
+						`tabPurchase Invoice Item` pii ON pri.parent = pii.purchase_receipt
+					WHERE pii.parent=%s
+					GROUP BY sle.warehouse, sle.batch_no
+					HAVING SUM(sle.actual_qty) > 0
+					ORDER BY sle.posting_date ASC""", (source_name))
+
+	res = []
+	for d in set(items):
+		res.append({
+			"item_code": d[0],
+			"warehouse": d[3],
+			"qty": d[4],
+			"item_name": d[1],
+			"batch_no": d[2],
+			"valuation_rate": d[6],
+			"current_qty": d[4],
+			"current_valuation_rate": d[6]
+		})
+
+	return res
+
+@frappe.whitelist()
 def get_stock_balance_for(item_code, warehouse,
 	posting_date, posting_time, batch_no=None, with_valuation_rate= True):
 	frappe.has_permission("Stock Reconciliation", "write", throw = True)

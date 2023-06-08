@@ -564,3 +564,7 @@ def update_status(status, name):
 def make_inter_company_sales_order(source_name, target_doc=None):
 	from erpnext.accounts.doctype.sales_invoice.sales_invoice import make_inter_company_transaction
 	return make_inter_company_transaction("Purchase Order", source_name, target_doc)
+
+@frappe.whitelist()
+def get_pi_price(purchase_order):
+	return frappe.db.sql("""select po_detail, rate from `tabPurchase Invoice Item` where purchase_order=%s and docstatus=1""", (purchase_order), as_dict=1)

@@ -164,7 +164,30 @@ frappe.ui.form.on("Stock Reconciliation", {
 				}
 			});
 		}
+	},
+
+	purchase_invoice: function(frm, cdt, cdn) {
+		if (frm.doc.purchase_invoice) {
+			frappe.call({
+				method:"erpnext.stock.doctype.stock_reconciliation.stock_reconciliation.get_pi_recon",
+				args: {
+					source_name: frm.doc.purchase_invoice,
+				},
+				callback: function(r) {
+					var items = [];
+					frm.clear_table("items");
+					for(var i=0; i< r.message.length; i++) {
+						var d = frm.add_child("items");
+						$.extend(d, r.message[i]);
+						if(!d.qty) d.qty = null;
+						if(!d.valuation_rate) d.valuation_rate = null;
+					}
+					frm.refresh_field("items");
+				}
+			});
+		}
 	}
+
 });
 
 frappe.ui.form.on("Stock Reconciliation Item", {
