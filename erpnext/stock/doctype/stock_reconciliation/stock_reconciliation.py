@@ -516,26 +516,12 @@ def get_items(warehouse, posting_date, posting_time, company):
 @frappe.whitelist()
 def get_pi_recon(source_name):
 	items = frappe.db.sql("""
-					SELECT
-						sle.item_code,
-						i.item_name,
-						sle.batch_no,
-						sle.warehouse,
-						SUM(sle.actual_qty) as qty,
-						sle.stock_uom as uom,
-						pii.rate
-					FROM
-						`tabStock Ledger Entry` sle
-					INNER JOIN
-						`tabItem` i ON sle.item_code = i.item_code
-					INNER JOIN
-						`tabBatch` b ON sle.batch_no = b.name
-					INNER JOIN
-						`tabPurchase Receipt Item` pri ON pri.batch_no = sle.batch_no
-					INNER JOIN
-						`tabPurchase Invoice Item` pii ON pri.parent = pii.purchase_receipt
-					WHERE pii.parent=%s
-					GROUP BY sle.warehouse, sle.batch_no
+					SELECT sle.item_code, pri.item_name, sle.batch_no, sle.warehouse, sle.actual_qty as qty, sle.stock_uom as uom, pii.rate
+					FROM `tabStock Ledger Entry` sle,
+						`tabPurchase Receipt Item` pri,
+						`tabPurchase Invoice Item` pii
+					WHERE sle.batch_no=pri.batch_no AND pri.parent = pii.purchase_receipt AND pii.item_code=sle.item_code AND pii.parent=%s
+					GROUP BY sle.batch_no, sle.warehouse
 					HAVING SUM(sle.actual_qty) > 0
 					ORDER BY sle.posting_date ASC""", (source_name))
 
